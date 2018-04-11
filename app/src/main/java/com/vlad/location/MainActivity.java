@@ -27,47 +27,35 @@ public class MainActivity extends AppCompatActivity {
     Button btnLoc;
     LocationManager locationManager;
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         btnLoc = (Button) findViewById(R.id.btnGetLoc);
         ActivityCompat.requestPermissions(MainActivity.this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, 123);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+        {
             buildAlertMessageNoGps();
         }
         btnLoc.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                 //   locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                //    if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                //        buildAlertMessageNoGps();
-                //   } else if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-                 //   {
-
+            public void onClick(View v)
+            {
                 GpsTracker gt = new GpsTracker(getApplicationContext());
                 Location l = gt.getLocation();
-                if (l == null) {
+                if (l == null)
+                {
                     Toast.makeText(getApplicationContext(), "GPS unable to get Value please wait", Toast.LENGTH_SHORT).show();
-                    //l = gt.getLocation();
                 }
-                else {
+                else
+                {
                     String date = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
                     double lat = l.getLatitude();
                     double lon = l.getLongitude();
                     Toast.makeText(getApplicationContext(), "GPS Lat = " + lat + "\n lon = " + lon + " \n Date and time: " + date, Toast.LENGTH_SHORT).show();
                 }
-           // }
 
-                /*
-                if( l == null){
-                    Toast.makeText(getApplicationContext(),"GPS unable to get Value",Toast.LENGTH_SHORT).show();
-                }else {
-                    double lat = l.getLatitude();
-                    double lon = l.getLongitude();
-                    Toast.makeText(getApplicationContext(),"GPS Lat = "+lat+"\n lon = "+lon,Toast.LENGTH_SHORT).show();
-                }
-                */
              }
         });
     }
