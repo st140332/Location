@@ -15,6 +15,8 @@ import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,6 +26,7 @@ import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
@@ -32,16 +35,26 @@ public class MainActivity extends AppCompatActivity {
     LocationManager locationManager;
     SensorManager sensorManager;
     Sensor sensorLight;
-    String level;
+   Double level;
+    RecyclerView recyclerView;
+    RecyclerView.Adapter adapter;
+    AppDatabase db = App.getInstance().getDatabase();
+    List<Light> lights = db.lightDao().getAll();
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        recyclerView=(RecyclerView)findViewById(R.id.recycler_view) ;
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         sensorLight = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         btnLoc = (Button) findViewById(R.id.btnGetLoc);
         ActivityCompat.requestPermissions(MainActivity.this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, 123);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new LightAdapter(lights);
+        recyclerView.setAdapter(adapter);
+        sensorManager.registerListener(listenerLight, sensorLight,
+                SensorManager.SENSOR_DELAY_NORMAL);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
         {
@@ -51,8 +64,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v)
             {
-                sensorManager.registerListener(listenerLight, sensorLight,
-                        SensorManager.SENSOR_DELAY_NORMAL);
+
+
+
                 GpsTracker gt = new GpsTracker(getApplicationContext());
                 Location l = gt.getLocation();
                 if (l == null)
@@ -66,6 +80,12 @@ public class MainActivity extends AppCompatActivity {
                     double lon = l.getLongitude();
                     Toast.makeText(getApplicationContext(), "GPS Lat = " + lat + "\n lon = "
                             + lon + " \n Date and time: " + date + " \n Light: " + level, Toast.LENGTH_SHORT).show();
+                    db.lightDao().insertAll(new Light(lat,lon,level,date));
+                    lights.add(new Light(lat,lon,level,date));
+                    lights = db.lightDao().getAll();
+                    adapter = new LightAdapter(lights);
+                    recyclerView.setAdapter(adapter);
+
                 }
 
              }
@@ -99,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onSensorChanged(SensorEvent event) {
            // tvText.setText(String.valueOf(event.values[0]));
-             level = String.valueOf(event.values[0]);
+             level = Double.valueOf(event.values[0]);
 
 
         }
