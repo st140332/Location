@@ -11,7 +11,9 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
@@ -22,6 +24,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
     RecyclerView.Adapter adapter;
     AppDatabase db = App.getInstance().getDatabase();
     List<Light> lights = db.lightDao().getAll();
+    String sec;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -100,9 +106,22 @@ public class MainActivity extends AppCompatActivity {
         });
 
         final Handler handler = new Handler();
-        final int delay = 5000; //milliseconds
+        final int delay = 10000; //milliseconds
+
         final Runnable runnableCode = new Runnable() {
             public void run(){
+                new CountDownTimer(delay, 100) {
+
+                    public void onTick(long millisUntilFinished) {
+                        btnAuto.setText(Double.toString(millisUntilFinished / 1000));
+                        btnAuto.setEnabled(false);
+                    }
+
+                    public void onFinish() {
+                        btnAuto.setText("AUTO");
+                        btnAuto.setEnabled(true);
+                    }
+                }.start();
                 GpsTracker gt = new GpsTracker(getApplicationContext());
                 Location l = gt.getLocation();
                 if (l == null)
@@ -131,7 +150,25 @@ public class MainActivity extends AppCompatActivity {
         btnAuto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                btnAuto.setEnabled(false);
+                //popUpEditText();
+               // no2=Integer.parseInt(sec);
+                new CountDownTimer(delay, 100) {
+
+                    public void onTick(long millisUntilFinished) {
+                        btnAuto.setText(Double.toString(millisUntilFinished / 1000));
+                        btnAuto.setEnabled(false);
+                    }
+
+                    public void onFinish() {
+                        btnAuto.setText("AUTO");
+                        btnAuto.setEnabled(true);
+                    }
+
+                }.start();
                 handler.postDelayed(runnableCode,delay);
+
+
             }
         });
 
@@ -139,6 +176,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 handler.removeCallbacks(runnableCode);
+                Toast.makeText(getApplicationContext(), "Stopped!", Toast.LENGTH_SHORT).show();
+                btnAuto.setText("AUTO");
+                btnAuto.setEnabled(true);
+
             }
         });
 
@@ -176,4 +217,34 @@ public class MainActivity extends AppCompatActivity {
 
         }
     };
+
+    private void popUpEditText() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Comments");
+
+        final EditText input = new EditText(this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        input.setLayoutParams(lp);
+        builder.setView(input);
+
+        // Set up the buttons
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                sec = input.getText().toString();
+
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
+    }
+
+
 }
