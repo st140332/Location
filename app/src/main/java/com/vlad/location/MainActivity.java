@@ -11,6 +11,7 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
@@ -28,10 +29,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button btnLoc;
+    Button btnLoc,btnAuto;
     LocationManager locationManager;
     SensorManager sensorManager;
     Sensor sensorLight;
@@ -49,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         sensorLight = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         btnLoc = (Button) findViewById(R.id.btnGetLoc);
+        btnAuto=(Button) findViewById(R.id.btnAuto);
         ActivityCompat.requestPermissions(MainActivity.this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, 123);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new LightAdapter(lights);
@@ -60,6 +64,9 @@ public class MainActivity extends AppCompatActivity {
         {
             buildAlertMessageNoGps();
         }
+
+
+
         btnLoc.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v)
@@ -89,6 +96,69 @@ public class MainActivity extends AppCompatActivity {
                 }
 
              }
+        });
+
+
+
+
+        btnAuto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                
+                final Handler handler = new Handler();
+                final int delay = 5000; //milliseconds
+
+                handler.postDelayed(new Runnable(){
+                    public void run(){
+                        GpsTracker gt = new GpsTracker(getApplicationContext());
+                        Location l = gt.getLocation();
+                        if (l == null)
+                        {
+                            Toast.makeText(getApplicationContext(), "GPS unable to get Value please wait", Toast.LENGTH_SHORT).show();
+                        }
+                        else
+                        {
+                            String date = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
+                            double lat = l.getLatitude();
+                            double lon = l.getLongitude();
+                            Toast.makeText(getApplicationContext(), "GPS Lat = " + lat + "\n lon = "
+                                    + lon + " \n Date and time: " + date + " \n Light: " + level, Toast.LENGTH_SHORT).show();
+                            db.lightDao().insertAll(new Light(lat,lon,level,date));
+                            lights.add(new Light(lat,lon,level,date));
+                            lights = db.lightDao().getAll();
+                            adapter = new LightAdapter(lights);
+                            recyclerView.setAdapter(adapter);
+
+                        }
+                        handler.postDelayed(this, delay);
+                    }
+                }, delay);
+         /*       Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(new Runnable() {
+                    @Override
+                    public void run() {
+                        GpsTracker gt = new GpsTracker(getApplicationContext());
+                        Location l = gt.getLocation();
+                        if (l == null)
+                        {
+                            Toast.makeText(getApplicationContext(), "GPS unable to get Value please wait", Toast.LENGTH_SHORT).show();
+                        }
+                        else
+                        {
+                            String date = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
+                            double lat = l.getLatitude();
+                            double lon = l.getLongitude();
+                            Toast.makeText(getApplicationContext(), "GPS Lat = " + lat + "\n lon = "
+                                    + lon + " \n Date and time: " + date + " \n Light: " + level, Toast.LENGTH_SHORT).show();
+                            db.lightDao().insertAll(new Light(lat,lon,level,date));
+                            lights.add(new Light(lat,lon,level,date));
+                            lights = db.lightDao().getAll();
+                            adapter = new LightAdapter(lights);
+                            recyclerView.setAdapter(adapter);
+
+                        }
+                    }
+                }, 0, 30, TimeUnit.SECONDS); */
+            }
         });
     }
     protected void buildAlertMessageNoGps() {
