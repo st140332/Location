@@ -8,6 +8,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -29,6 +31,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -92,8 +95,29 @@ public class MainActivity extends AppCompatActivity {
                     String date = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
                     double lat = l.getLatitude();
                     double lon = l.getLongitude();
+
+                    Geocoder geocoder;
+                    List<Address> addresses = null;
+                    geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
+
+                    try {
+                        addresses = geocoder.getFromLocation(lat, lon, 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    String city = addresses.get(0).getAddressLine(0);
+/*
+                    String search = "lāčplēša iela 13";
+                    String result;
+                    if (city.toLowerCase().contains(search.toLowerCase())) {
+                    result = "it works!";
+                } else {
+                        result = "not working!";
+                }
+*/
                     Toast.makeText(getApplicationContext(), "GPS Lat = " + lat + "\n lon = "
-                            + lon + " \n Date and time: " + date + " \n Light: " + level, Toast.LENGTH_SHORT).show();
+                            + lon + " \n Date and time: " + date + " \n Light: " + level+ " \n Adress: " + city, Toast.LENGTH_SHORT).show();
                     db.lightDao().insertAll(new Light(lat,lon,level,date));
                     lights.add(new Light(lat,lon,level,date));
                     lights = db.lightDao().getAll();
