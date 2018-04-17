@@ -2,6 +2,8 @@ package com.vlad.location;
 
 import android.content.Context;
 import android.content.Intent;
+import android.location.Address;
+import android.location.Geocoder;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -10,7 +12,9 @@ import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by Vlad on 12.04.2018.
@@ -40,7 +44,18 @@ public class LightAdapter extends RecyclerView.Adapter<LightAdapter.ViewHolder> 
         holder.relativeLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("geo:<" + lights.get(position).getLatitude()  + ">,<" + lights.get(position).getLongitude() + ">?q=<" + lights.get(position).getLatitude()  + ">,<" + lights.get(position).getLongitude() + ">(Searched place)"));
+                Geocoder geocoder;
+                List<Address> addresses = null;
+                geocoder = new Geocoder(context, Locale.getDefault());
+
+                try {
+                    addresses = geocoder.getFromLocation(lights.get(position).getLatitude(), lights.get(position).getLongitude(), 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                String city = addresses.get(0).getAddressLine(0);
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("geo:<" + lights.get(position).getLatitude()  + ">,<" + lights.get(position).getLongitude() + ">?q=<" + lights.get(position).getLatitude()  + ">,<" + lights.get(position).getLongitude() + ">("+city+")"));
                 context.startActivity(intent);
             }
         });
